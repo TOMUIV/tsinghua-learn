@@ -10,15 +10,18 @@ install_playwright.py
 【用法】
   python install_playwright.py
 """
-import sys, subprocess
+import sys, os, subprocess
+
+_MIRROR = "https://npmmirror.com/mirrors/playwright/"
+
 
 def run():
-    print("正在安装 Playwright Chromium（只会执行一次）...")
-    print("这可能需要几分钟，请耐心等待...\n")
-
+    print("正在安装 Playwright Chromium...")
+    env = os.environ.copy()
+    env["PLAYWRIGHT_DOWNLOAD_HOST"] = _MIRROR
     result = subprocess.run(
         [sys.executable, "-m", "playwright", "install", "chromium"],
-        capture_output=False
+        capture_output=False, env=env
     )
 
     if result.returncode == 0:
