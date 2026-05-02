@@ -428,24 +428,6 @@ Step 2：用户说"好了"后，AI 调用：
 login_manager.py --check 返回 initialized=false 时：
 AI 告诉用户"系统尚未初始化"，然后按初始化流程的 Step 1 开始收集信息
 ```
-```
-# --verify 或 login_manager.py 返回 needs_2fa=true 时:
-# ✅ 正确做法：
-#   告诉用户"自动登录失败，请打开浏览器完成二次验证"
-#   等用户说"好了"
-python scripts/login_manager.py
-# ← 再次检查 session，应该已经有效了
-```
-
-#### 凭据未初始化怎么办？
-```
-# login_manager.py --check 返回 initialized=false 时:
-# ✅ 正确做法：
-#   告诉用户"系统尚未初始化，请提供你的网络学堂登录账号、密码、学号、姓名"
-#   收集信息后走初始化流程
-```
-
----
 
 ### 脚本概览
 
@@ -484,30 +466,6 @@ python scripts/login_manager.py
    - 标已读: python scripts/todos_api.py --mark-read
    - 清理预览: python scripts/ops.py --action cleanup --dry-run
    - 执行清理: python scripts/ops.py --action cleanup
-```
-
-### 常见问题处理
-
-#### session 过期
-```
-python scripts/login_manager.py
-← session 失效时会自动续期，无需特殊处理
-```
-
-#### 需要二次验证 (2FA)
-```
-# --verify 返回 needs_2fa=true 时:
-告诉用户"自动登录失败，请打开浏览器完成二次验证"
-等用户说"好了"后:
-python scripts/login_manager.py
-← 验证 session
-```
-
-#### 凭据未初始化
-```
-# login_manager.py 返回 code=3:
-告诉用户"系统尚未初始化，请提供你的网络学堂登录账号、密码、学号、姓名"
-→ 走初始化流程
 ```
 
 ### 详细 CLI 命令
