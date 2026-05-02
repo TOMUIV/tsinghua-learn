@@ -5,13 +5,9 @@ learn_api.py — 清华网络学堂 HTTP API 封装
 """
 import sys
 sys.stdout.reconfigure(encoding='utf-8')
-import os, json, time, ssl, base64, re, warnings
+import os, json, time, base64, re
 import requests
-import urllib3
 from urllib.parse import urlencode, quote
-
-warnings.filterwarnings('ignore')
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _config import get_state_file, get_semester, get_download_dir_abs
@@ -36,11 +32,6 @@ AJAX_HEADERS = {
     "Accept": "application/json, text/javascript, */*; q=0.01",
     "X-Requested-With": "XMLHttpRequest",
 }
-
-ctx = ssl.create_default_context()
-ctx.check_hostname = False
-ctx.verify_mode = ssl.CERT_NONE
-
 
 def escape_filename(s):
     for ch in [' ', '\t', '?', '/', "'", '"', '<', '>', '#', ';', '*', '|', '\\']:
@@ -116,7 +107,7 @@ class LearnAPI:
             r = self.session.get(
                 f"{LEARN_BASE}/b/wlxt/kczy/zy/student/index/zyListWj?wlkcid=&size=1",
                 headers={**AJAX_HEADERS, "X-XSRF-TOKEN": self.xsrf_token} if self.xsrf_token else AJAX_HEADERS,
-                verify=False, timeout=8
+                timeout=8
             )
             valid = r.status_code == 200 and "location.href" not in r.text[:500]
             self.valid = valid
@@ -137,7 +128,7 @@ class LearnAPI:
                 kwargs["headers"]["Content-Type"] = "application/x-www-form-urlencoded"
             else:
                 kwargs["data"] = data
-        r = self.session.post(url, **kwargs, verify=False, timeout=15)
+        r = self.session.post(url, **kwargs, timeout=15)
         return _safe_json(r)
 
     def _get(self, path, params=None, use_ajax=False):
@@ -146,7 +137,7 @@ class LearnAPI:
         if self.xsrf_token:
             headers["X-XSRF-TOKEN"] = self.xsrf_token
         kwargs = {"headers": headers, "params": params}
-        r = self.session.get(url, **kwargs, verify=False, timeout=15)
+        r = self.session.get(url, **kwargs, timeout=15)
         return r
 
     def _get_json(self, path, params=None):
@@ -233,7 +224,7 @@ class LearnAPI:
                 f"{LEARN_BASE}/f/wlxt/kcgg/wlkc_ggb/student/beforeViewXs",
                 params={"wlkcid": wlkcid, "id": ggid},
                 headers={"Accept": "text/html,*/*"},
-                verify=False, timeout=15
+                timeout=15
             )
             return r.status_code == 200
         except Exception:
@@ -276,7 +267,7 @@ class LearnAPI:
         if self.xsrf_token:
             headers["X-XSRF-TOKEN"] = self.xsrf_token
 
-        r = self.session.get(url, params=params, headers=headers, verify=False, stream=True, timeout=30)
+        r = self.session.get(url, params=params, headers=headers, stream=True, timeout=30)
         if r.status_code != 200:
             return None
 
@@ -318,7 +309,7 @@ class LearnAPI:
                     "X-XSRF-TOKEN": self.xsrf_token,
                     "Referer": f"{LEARN_BASE}/f/wlxt/kj/wlkc_kjxxb/student/beforePageList",
                 },
-                data=f"wjid={wjid}&sfgk=0", timeout=10, verify=False
+                data=f"wjid={wjid}&sfgk=0", timeout=10
             )
             return r.status_code == 200 and 'success' in r.text
         except Exception:
@@ -491,7 +482,7 @@ class LearnAPI:
                     "Content-Type": "application/x-www-form-urlencoded",
                     "X-XSRF-TOKEN": self.xsrf_token,
                     "Accept": "application/json, */*",
-                }, data=body, verify=False, timeout=15
+                }, data=body, timeout=15
             )
             d = _safe_json(r)
             return _get_items(d)
@@ -597,7 +588,7 @@ class LearnAPI:
                 data={"xszyid": xszyid, "isDeleted": "0", "zynr": content},
                 files={"fileupload": (basename, f, "application/pdf")},
                 headers={"X-XSRF-TOKEN": self.xsrf_token, "Referer": f"{LEARN_BASE}/f/wlxt/kczy/zy/student/tijiao?wlkcid={wlkcid}&xszyid={xszyid}"},
-                verify=False, timeout=30
+                timeout=30
             )
         try:
             data = r.json()

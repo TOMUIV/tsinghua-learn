@@ -13,12 +13,8 @@ login_manager.py — 中央认证网关
   python login_manager.py --init --username=X --password=Y --student-id=Z --name=W
   python login_manager.py --check           # 仅检查 session 是否有效
 """
-import sys, os, json, time, subprocess, requests, warnings
-import urllib3
+import sys, os, json, time, subprocess, requests
 sys.stdout.reconfigure(encoding='utf-8')
-
-warnings.filterwarnings('ignore')
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _config import load_credentials, save_credentials, get_state_file, is_initialized
@@ -110,7 +106,7 @@ def init_credentials(username=None, password=None, student_id=None, name=None, l
     save_credentials(username, password, learn_account, name)
     result = {
         "status": "ok",
-        "message": "凭据已保存（base64 加密）",
+        "message": "凭据已保存（base64 编码）",
         "fields": {
             "learn_account": learn_account,
             "password": password[:3] + "***" if len(password) > 3 else "***",
@@ -126,6 +122,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description="网络学堂中央认证网关")
     parser.add_argument("--init", action="store_true", help="初始化凭据")
+    parser.add_argument("--cred-stdin", action="store_true", help="从标准输入读取凭据 JSON（避免密码出现在命令行）")
     parser.add_argument("--reset", action="store_true", help="清空所有数据（凭据/session/profile/下载/上传/配置），保留文件结构")
     parser.add_argument("--learn-account", default=None, help="网络学堂登录账号")
     parser.add_argument("--password", default=None, help="网络学堂登录密码")
@@ -189,6 +186,16 @@ if __name__ == '__main__':
 
     if args.init:
         learn_account = args.learn_account or args.student_id
+        if args.cred_stdin:
+            try:
+                data = json.loads(sys.stdin.read())
+                learn_account = data.get("learn_account") or data.get("student_id") or learn_account
+                args.username = data.get("username") or args.username
+                args.password = data.get("password") or args.password
+                args.name = data.get("name") or args.name
+            except Exception as e:
+                print(json.dumps({"status": "error", "message": f"stdin JSON 解析失败: {e}"}, ensure_ascii=False))
+                sys.exit(1)
         init_credentials(args.username, args.password, learn_account=learn_account, name=args.name)
         sys.exit(0)
 

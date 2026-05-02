@@ -2,7 +2,7 @@
 """
 _config.py — 路径 + 配置 + 凭证集中管理
 所有脚本通过 import _config 获取路径/配置/账号密码
-凭证用 base64 加密存储在 credentials.json
+凭证用 base64 编码存储在 credentials.json
 """
 import os, json, base64
 
@@ -82,7 +82,7 @@ def load_credentials():
     return {k: decode_cred(v) for k, v in cred.items()}
 
 def save_credentials(username, password, student_id="", name=""):
-    """Base64 加密后写入 credentials.json"""
+    """Base64 编码后写入 credentials.json"""
     data = {
         "username": encode_cred(username),
         "password": encode_cred(password),

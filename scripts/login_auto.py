@@ -16,11 +16,8 @@ login_auto.py
   固定 profile 路径：profiles/learn_profile/
   账号密码从 credentials.json 统一读取（禁止硬编码）
 """
-import sys, os, json, time, re, warnings
-import urllib3
+import sys, os, json, time, re
 sys.stdout.reconfigure(encoding='utf-8')
-warnings.filterwarnings('ignore')
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from playwright.sync_api import sync_playwright
 import requests
 

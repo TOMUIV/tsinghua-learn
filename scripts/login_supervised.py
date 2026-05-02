@@ -18,11 +18,8 @@ login_supervised.py
   固定 profile 路径：profiles/learn_profile/（永不重建）
   不管脚本跑多少次，都用同一个 profile → cookies 复用 → 不触发 2FA
 """
-import sys, os, json, time, re, warnings
-import urllib3
+import sys, os, json, time, re
 sys.stdout.reconfigure(encoding='utf-8')
-warnings.filterwarnings('ignore')
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from playwright.sync_api import sync_playwright
 
 # ====== 账号密码（从 credentials.json 统一加载）=======

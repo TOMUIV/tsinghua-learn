@@ -4,12 +4,8 @@ ops.py — 文件操作统一入口
 功能：下载、上传、移入工作区、清理垃圾。
 所有文件格式通用，不上传/下载路径硬编码。
 """
-import sys, os, json, shutil, fnmatch, warnings
-import urllib3
+import sys, os, json, shutil, fnmatch
 sys.stdout.reconfigure(encoding='utf-8')
-
-warnings.filterwarnings('ignore')
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _config import get_download_dir_abs, get_upload_dir, get_semester, \

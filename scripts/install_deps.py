@@ -9,11 +9,11 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 REQUIRED_VERSION = (3, 10)
 REQUIRED_PACKAGES = [
-    "requests",
-    "playwright",
-    "beautifulsoup4",
-    "pillow",
-    "pillow-heif",
+    "requests>=2.28.0",
+    "playwright>=1.40.0",
+    "beautifulsoup4>=4.12.0",
+    "pillow>=10.0.0",
+    "pillow-heif>=0.15.0",
 ]
 
 # pip 包名 → import 模块名对照

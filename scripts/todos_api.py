@@ -10,12 +10,8 @@ todos_api.py — 日常管理脚本
   python todos_api.py --cleanup                          # 汇总 + 执行清理
   python todos_api.py --mark-read --cleanup              # 汇总 + 标已读 + 清理
 """
-import sys, os, json, warnings
-import urllib3
+import sys, os, json
 sys.stdout.reconfigure(encoding='utf-8')
-
-warnings.filterwarnings('ignore')
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from learn_api import LearnAPI
