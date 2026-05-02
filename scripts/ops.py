@@ -284,6 +284,7 @@ if __name__ == '__main__':
     parser.add_argument('--input-dir', default=None, help='PDF 合并输入目录')
     parser.add_argument('--output', default=None, help='输出路径')
     parser.add_argument('--dry-run', action='store_true', help='清理预览模式')
+    parser.add_argument('--confirm', action='store_true', help='上传作业确认（必需）')
     args = parser.parse_args()
 
     if args.action == 'list-files':
@@ -308,6 +309,18 @@ if __name__ == '__main__':
     elif args.action == 'upload':
         if not args.course or not args.xszyid or not args.file:
             print("需要 --course --xszyid --file", file=sys.stderr); sys.exit(1)
+        if not args.confirm:
+            print(json.dumps({
+                "status": "pending",
+                "requiring": "confirmation",
+                "details": {
+                    "course": args.course,
+                    "xszyid": args.xszyid,
+                    "file": args.file,
+                },
+                "message": "请确认提交以上文件到指定作业。AI 必须获得用户明确同意后，添加 --confirm 重新执行"
+            }, ensure_ascii=False))
+            sys.exit(2)
         upload_homework(args.course, args.xszyid, args.file)
 
     elif args.action == 'move-in':
