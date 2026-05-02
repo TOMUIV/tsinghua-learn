@@ -76,7 +76,6 @@ try:
         PROFILE_DIR,
         headless=False,                    # 可视化，可做 2FA
         viewport={"width": 1280, "height": 900},
-        ignore_https_errors=True,
         args=["--no-sandbox", "--disable-dev-shm-usage",
               "--disable-blink-features=AutomationControlled"],
     )

@@ -92,7 +92,6 @@ def auto_login():
             PROFILE_DIR,
             headless=True,
             viewport={"width": 1280, "height": 900},
-            ignore_https_errors=True,
             args=["--no-sandbox", "--disable-dev-shm-usage",
                   "--disable-blink-features=AutomationControlled"],
         )

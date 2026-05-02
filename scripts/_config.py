@@ -38,9 +38,9 @@ if sys.platform == "win32":
 
 
 def _dpapi_encrypt(plaintext):
-    """Windows DPAPI 加密，绑定当前用户账户。"""
+    """Windows DPAPI 加密，绑定当前用户账户。非 Windows 平台报错。"""
     if not _DPAPI_AVAILABLE:
-        return base64.b64encode(plaintext.encode()).decode()
+        raise RuntimeError("DPAPI 仅支持 Windows 平台，无法加密凭据")
     data_bytes = plaintext.encode()
     data_in = _DATA_BLOB(len(data_bytes), ctypes.cast(ctypes.create_string_buffer(data_bytes), ctypes.POINTER(ctypes.c_ubyte)))
     data_out = _DATA_BLOB()
@@ -54,12 +54,9 @@ def _dpapi_encrypt(plaintext):
 
 
 def _dpapi_decrypt(ciphertext):
-    """Windows DPAPI 解密，仅当前用户可解密。"""
+    """Windows DPAPI 解密，仅当前用户可解密。非 Windows 平台报错。"""
     if not _DPAPI_AVAILABLE:
-        try:
-            return base64.b64decode(ciphertext).decode()
-        except Exception:
-            return ciphertext
+        raise RuntimeError("DPAPI 仅支持 Windows 平台，无法解密凭据")
     try:
         raw = base64.b64decode(ciphertext)
     except Exception:

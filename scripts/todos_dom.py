@@ -98,7 +98,6 @@ try:
     ctx = pw.chromium.launch_persistent_context(
         PROFILE_TMP, headless=True,
         viewport={"width": 1280, "height": 900},
-        ignore_https_errors=True,
         args=["--no-sandbox", "--disable-dev-shm-usage"],
     )
     page = ctx.pages[0] if ctx.pages else ctx.new_page()

@@ -109,8 +109,8 @@ def init_credentials(username=None, password=None, student_id=None, name=None, l
         "message": "凭据已保存（Windows DPAPI 加密）",
         "fields": {
             "learn_account": learn_account,
-            "password": password[:3] + "***" if len(password) > 3 else "***",
-            "username": username[:4] + "***" if len(username) > 4 else username,
+            "password": "***",
+            "username": "***",
             "name": name,
         },
     }
