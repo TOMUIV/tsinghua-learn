@@ -106,7 +106,7 @@ def init_credentials(username=None, password=None, student_id=None, name=None, l
     save_credentials(username, password, learn_account, name)
     result = {
         "status": "ok",
-        "message": "凭据已保存（base64 编码）",
+        "message": "凭据已保存（Windows DPAPI 加密）",
         "fields": {
             "learn_account": learn_account,
             "password": password[:3] + "***" if len(password) > 3 else "***",

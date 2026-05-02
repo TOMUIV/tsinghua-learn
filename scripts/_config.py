@@ -2,9 +2,10 @@
 """
 _config.py — 路径 + 配置 + 凭证集中管理
 所有脚本通过 import _config 获取路径/配置/账号密码
-凭证用 base64 编码存储在 credentials.json
+凭证使用 Windows DPAPI 加密（非 Windows 回退 base64 编码）
 """
-import os, json, base64
+import os, json, base64, sys, ctypes
+from ctypes import wintypes
 
 _SKILL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -21,15 +22,64 @@ def _load_json(path):
         return json.load(f)
 
 
-# ── Base64 工具 ──────────────────────────────
+# ── DPAPI 加密工具（Windows）─────────────────────
+_DPAPI_AVAILABLE = False
+
+if sys.platform == "win32":
+    try:
+        class _DATA_BLOB(ctypes.Structure):
+            _fields_ = [("cbData", wintypes.DWORD), ("pbData", ctypes.POINTER(ctypes.c_ubyte))]
+        _crypt32 = ctypes.windll.crypt32
+        _kernel32 = ctypes.windll.kernel32
+        _CRYPTPROTECT_UI_FORBIDDEN = 0x1
+        _DPAPI_AVAILABLE = True
+    except Exception:
+        pass
+
+
+def _dpapi_encrypt(plaintext):
+    """Windows DPAPI 加密，绑定当前用户账户。"""
+    if not _DPAPI_AVAILABLE:
+        return base64.b64encode(plaintext.encode()).decode()
+    data_bytes = plaintext.encode()
+    data_in = _DATA_BLOB(len(data_bytes), ctypes.cast(ctypes.create_string_buffer(data_bytes), ctypes.POINTER(ctypes.c_ubyte)))
+    data_out = _DATA_BLOB()
+    entropy = _DATA_BLOB()
+    if _crypt32.CryptProtectData(ctypes.byref(data_in), "tsinghua-learn", ctypes.byref(entropy),
+                                 None, None, _CRYPTPROTECT_UI_FORBIDDEN, ctypes.byref(data_out)):
+        raw = ctypes.string_at(data_out.pbData, data_out.cbData)
+        _kernel32.LocalFree(data_out.pbData)
+        return base64.b64encode(raw).decode()
+    return base64.b64encode(plaintext.encode()).decode()
+
+
+def _dpapi_decrypt(ciphertext):
+    """Windows DPAPI 解密，仅当前用户可解密。"""
+    if not _DPAPI_AVAILABLE:
+        try:
+            return base64.b64decode(ciphertext).decode()
+        except Exception:
+            return ciphertext
+    try:
+        raw = base64.b64decode(ciphertext)
+    except Exception:
+        return ciphertext
+    data_in = _DATA_BLOB(len(raw), ctypes.cast(ctypes.create_string_buffer(raw), ctypes.POINTER(ctypes.c_ubyte)))
+    data_out = _DATA_BLOB()
+    entropy = _DATA_BLOB()
+    if _crypt32.CryptUnprotectData(ctypes.byref(data_in), None, ctypes.byref(entropy),
+                                   None, None, _CRYPTPROTECT_UI_FORBIDDEN, ctypes.byref(data_out)):
+        result = ctypes.string_at(data_out.pbData, data_out.cbData).decode()
+        _kernel32.LocalFree(data_out.pbData)
+        return result
+    return ciphertext
+
+
 def encode_cred(s):
-    return base64.b64encode(s.encode()).decode()
+    return _dpapi_encrypt(s)
 
 def decode_cred(s):
-    try:
-        return base64.b64decode(s).decode()
-    except Exception:
-        return s
+    return _dpapi_decrypt(s)
 
 
 # ── 配置 ──────────────────────────────────────
@@ -82,7 +132,7 @@ def load_credentials():
     return {k: decode_cred(v) for k, v in cred.items()}
 
 def save_credentials(username, password, student_id="", name=""):
-    """Base64 编码后写入 credentials.json"""
+    """Windows DPAPI 加密后写入 credentials.json（非 Windows 回退 base64 编码）"""
     data = {
         "username": encode_cred(username),
         "password": encode_cred(password),

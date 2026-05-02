@@ -1,5 +1,5 @@
 {
-  "auto_mark_read": true,
+  "auto_mark_read": false,
   "confirm_before_cleanup": true,
   "confirm_before_download": true
 }
