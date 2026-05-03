@@ -100,10 +100,8 @@ def build_summary():
     else:
         summary["cleanup_suggestion"] = None
 
-    # 建议操作（给 AI 参考，AI 决定是否通知用户）
+    # 建议操作（给 AI 参考）
     suggestions = []
-    if not auto_mark_read() and summary["total_unread"] > 0:
-        suggestions.append("运行 --mark-read 标记公告和课件为已读")
     if summary.get("cleanup_suggestion"):
         suggestions.append("运行 --cleanup-preview 查看可清理的文件")
     if suggestions:
@@ -129,26 +127,52 @@ def do_mark_read(api, courses):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description="网络学堂日常管理")
-    parser.add_argument('--mark-read', action='store_true', help="标记所有可读项已读")
+    parser.add_argument('--mark-read', action='store_true', help="标记可读项已读（需配合 --confirm）")
+    parser.add_argument('--confirm', action='store_true', help="确认执行标记已读")
     parser.add_argument('--cleanup-preview', action='store_true', help="清理预览")
     parser.add_argument('--cleanup', action='store_true', help="执行清理")
     args = parser.parse_args()
 
-    # 先标记已读（如启用），再构建 summary，确保数据反映最新状态
-    mark_result = None
-    if args.mark_read or auto_mark_read():
-        api = LearnAPI()
-        if api.reload_session():
-            courses = api.get_courses()
-            mark_result = do_mark_read(api, courses)
-
+    # 先构建 summary
     summary = build_summary()
     if summary.get("status") == "error":
         print(json.dumps(summary, ensure_ascii=False))
         sys.exit(1)
 
-    if mark_result:
+    # 标记已读：必须显式 --mark-read --confirm
+    if args.mark_read:
+        api = LearnAPI()
+        if not api.reload_session():
+            print(json.dumps({"status": "error", "message": "Session 无效"}, ensure_ascii=False))
+            sys.exit(1)
+        courses = api.get_courses()
+        unread_count = sum(
+            len([a for a in api.get_course_detail(c["wlkcid"]).get("announcements",[]) if a.get("unread")]) +
+            len([f for f in api.get_course_detail(c["wlkcid"]).get("files",[]) if f.get("is_new")])
+            for c in courses
+        )
+        if not args.confirm:
+            print(json.dumps({
+                "status": "pending",
+                "requiring": "confirmation",
+                "unread_items": unread_count,
+                "message": "请确认标记以上未读项为已读。AI 必须获得用户明确同意后，添加 --confirm 重新执行"
+            }, ensure_ascii=False))
+            sys.exit(2)
+        mark_result = do_mark_read(api, courses)
         summary["mark_read_result"] = mark_result
+
+    # 如果 auto_mark_read 为 true 但没有 --mark-read，提示 AI 应运行标记
+    if auto_mark_read() and not args.mark_read and summary["total_unread"] > 0:
+        if "suggestions" not in summary:
+            summary["suggestions"] = []
+        summary["suggestions"].append("运行 --mark-read --confirm 标记公告和课件为已读")
+
+    # 未开启 auto_mark_read 时给出普通建议
+    if not auto_mark_read() and summary["total_unread"] > 0:
+        if "suggestions" not in summary:
+            summary["suggestions"] = []
+        summary["suggestions"].append("运行 --mark-read --confirm 标记公告和课件为已读")
 
     # 处理清理预览
     if args.cleanup_preview:
