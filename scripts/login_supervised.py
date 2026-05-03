@@ -43,7 +43,11 @@ except Exception as e:
 CAS_URL = "https://id.tsinghua.edu.cn/do/off/ui/auth/login/form/bb5df85216504820be7bba2b0ae1535b/0"
 
 # ====== 正文 ======
-fp = json.load(open(FINGERPRINT_FILE, encoding="utf-8"))
+try:
+    fp = json.load(open(FINGERPRINT_FILE, encoding="utf-8"))
+except FileNotFoundError:
+    fp = {}
+    print("fingerprint 文件缺失，浏览器仍会弹出，但自动填充可能不完整。", flush=True)
 os.makedirs(PROFILE_DIR, exist_ok=True)
 
 
@@ -85,12 +89,13 @@ try:
     page.goto(CAS_URL, wait_until="domcontentloaded", timeout=30000)
     time.sleep(2)
 
-    page.evaluate(
-        "localStorage.setItem('fingerPrint', '" + fp["fingerPrint"] + "');"
-        "localStorage.setItem('fingerGenPrint', '" + fp.get("fingerGenPrint","") + "');"
-        "localStorage.setItem('fingerGenPrint3', '" + fp.get("fingerGenPrint3","") + "');"
-    )
-    time.sleep(1)
+    if fp and "fingerPrint" in fp:
+        page.evaluate(
+            "localStorage.setItem('fingerPrint', '" + fp["fingerPrint"] + "');"
+            "localStorage.setItem('fingerGenPrint', '" + fp.get("fingerGenPrint","") + "');"
+            "localStorage.setItem('fingerGenPrint3', '" + fp.get("fingerGenPrint3","") + "');"
+        )
+        time.sleep(1)
 
     page.fill("#i_user", USER)
     page.fill("#i_pass", PASS)
@@ -104,14 +109,13 @@ try:
     body  = page.inner_text("body")[:300]
 
     if "二次认证" in title or "二次验证" in body:
-        print()
-        print("=" * 40)
-        print("⚠️  检测到二次验证！")
-        print("   请在浏览器窗口中完成验证（企业微信/短信）")
-        print("   完成后脚本自动继续...")
-        print("=" * 40)
-        page.wait_for_url("**://learn.tsinghua.edu.cn/**", timeout=120000)
-        print("✅ 验证完成")
+        print("session 过期，需要二次验证。请在浏览器窗口中完成验证（短信/邮箱），验证完成后脚本自动继续。", flush=True)
+        try:
+            page.wait_for_url("**://learn.tsinghua.edu.cn/**", timeout=120000)
+            print("验证完成", flush=True)
+        except Exception:
+            print("二次验证超时。请重新运行脚本，并在浏览器弹出后关注浏览器窗口完成验证。", flush=True)
+            sys.exit(1)
     else:
         try:
             page.wait_for_url("**://learn.tsinghua.edu.cn/**", timeout=60000)
