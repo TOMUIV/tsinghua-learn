@@ -176,7 +176,7 @@ if __name__ == '__main__':
         if os.path.exists(cfg_path):
             with open(cfg_path, 'w', encoding='utf-8') as f:
                 json.dump({
-                    "auto_mark_read": False,
+                    "auto_mark_read": True,
                     "confirm_before_cleanup": True,
                     "confirm_before_download": True,
                 }, f, ensure_ascii=False, indent=2)
