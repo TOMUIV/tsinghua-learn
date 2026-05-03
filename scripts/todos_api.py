@@ -139,19 +139,19 @@ if __name__ == '__main__':
         print(json.dumps(summary, ensure_ascii=False))
         sys.exit(1)
 
-    # 标记已读：必须显式 --mark-read --confirm
+    # 标记已读：--mark-read 时按 auto_mark_read 决定是否需确认
     if args.mark_read:
         api = LearnAPI()
         if not api.reload_session():
             print(json.dumps({"status": "error", "message": "Session 无效"}, ensure_ascii=False))
             sys.exit(1)
         courses = api.get_courses()
-        unread_count = sum(
-            len([a for a in api.get_course_detail(c["wlkcid"]).get("announcements",[]) if a.get("unread")]) +
-            len([f for f in api.get_course_detail(c["wlkcid"]).get("files",[]) if f.get("is_new")])
-            for c in courses
-        )
-        if not args.confirm:
+        if not args.confirm and not auto_mark_read():
+            unread_count = sum(
+                len([a for a in api.get_course_detail(c["wlkcid"]).get("announcements",[]) if a.get("unread")]) +
+                len([f for f in api.get_course_detail(c["wlkcid"]).get("files",[]) if f.get("is_new")])
+                for c in courses
+            )
             print(json.dumps({
                 "status": "pending",
                 "requiring": "confirmation",
