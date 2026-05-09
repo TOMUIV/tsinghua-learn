@@ -133,11 +133,22 @@ if __name__ == '__main__':
     parser.add_argument('--cleanup', action='store_true', help="执行清理")
     args = parser.parse_args()
 
+    # auto_mark_read 为 true 时，先自动标记已读，再构建 summary
+    mark_result = None
+    if auto_mark_read() and not args.mark_read:
+        api = LearnAPI()
+        if api.reload_session():
+            courses = api.get_courses()
+            mark_result = do_mark_read(api, courses)
+
     # 先构建 summary
     summary = build_summary()
     if summary.get("status") == "error":
         print(json.dumps(summary, ensure_ascii=False))
         sys.exit(1)
+
+    if mark_result:
+        summary["mark_read_result"] = mark_result
 
     # 标记已读：--mark-read 时按 auto_mark_read 决定是否需确认
     if args.mark_read:
@@ -161,12 +172,6 @@ if __name__ == '__main__':
             sys.exit(2)
         mark_result = do_mark_read(api, courses)
         summary["mark_read_result"] = mark_result
-
-    # 如果 auto_mark_read 为 true 但没有 --mark-read，提示 AI 应运行标记
-    if auto_mark_read() and not args.mark_read and summary["total_unread"] > 0:
-        if "suggestions" not in summary:
-            summary["suggestions"] = []
-        summary["suggestions"].append("运行 --mark-read --confirm 标记公告和课件为已读")
 
     # 未开启 auto_mark_read 时给出普通建议
     if not auto_mark_read() and summary["total_unread"] > 0:
