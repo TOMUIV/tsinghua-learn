@@ -103,10 +103,15 @@ def init_credentials(username=None, password=None, student_id=None, name=None, l
         print(json.dumps(result, ensure_ascii=False))
         sys.exit(1)
 
-    save_credentials(username, password, learn_account, name)
+    try:
+        save_credentials(username, password, learn_account, name)
+    except Exception as e:
+        result = {"status": "error", "message": f"凭据保存失败: {e}"}
+        print(json.dumps(result, ensure_ascii=False))
+        sys.exit(1)
     result = {
         "status": "ok",
-        "message": "凭据已保存（Windows DPAPI 加密）",
+        "message": "凭据已保存（Windows 使用 DPAPI，Linux 使用本地主密钥 + Fernet）",
         "fields": {
             "learn_account": learn_account,
             "password": "***",
