@@ -14,6 +14,7 @@ REQUIRED_PACKAGES = [
     "beautifulsoup4==4.13.4",
     "pillow==11.2.1",
     "pillow-heif==0.21.0",
+    "cryptography",
 ]
 
 # pip 包名 → import 模块名对照
