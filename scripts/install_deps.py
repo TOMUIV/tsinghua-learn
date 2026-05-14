@@ -42,11 +42,20 @@ def check_package(name):
 
 
 def install(package):
-    r = subprocess.run(
-        [sys.executable, "-m", "pip", "install", package],
-        capture_output=True, timeout=120
-    )
-    return r.returncode == 0
+    cmd = [sys.executable, "-m", "pip", "install"]
+    # 小内存服务器上，cryptography 源码编译容易 OOM；强制使用 wheel。
+    if package.split("==")[0] == "cryptography":
+        cmd.extend(["--only-binary=:all:"])
+    cmd.append(package)
+    try:
+        # 云服务器网络和镜像波动较大，适当放宽超时时间。
+        r = subprocess.run(cmd, capture_output=True, timeout=600)
+        if r.returncode == 0:
+            return True, ""
+        err = r.stderr.decode("utf-8", errors="replace").strip()
+        return False, err[-300:] if err else "pip install 失败"
+    except subprocess.TimeoutExpired:
+        return False, "安装超时（600s）"
 
 
 if __name__ == "__main__":
@@ -61,16 +70,22 @@ if __name__ == "__main__":
         sys.exit(0)
 
     results = {}
+    errors = {}
     all_ok = True
     for pkg in missing:
-        ok = install(pkg)
+        ok, err = install(pkg)
         results[pkg] = ok
         if not ok:
             all_ok = False
+            errors[pkg] = err
 
     if all_ok:
         print(json.dumps({"status": "ok", "message": "\u4f9d\u8d56\u5b89\u88c5\u5b8c\u6210", "python": py_result["version"], "installed": missing}, ensure_ascii=False))
     else:
         failed = [p for p, ok in results.items() if not ok]
-        print(json.dumps({"status": "error", "message": f"\u4f9d\u8d56\u5b89\u88c5\u5931\u8d25: {failed}"}, ensure_ascii=False))
+        print(json.dumps({
+            "status": "error",
+            "message": f"\u4f9d\u8d56\u5b89\u88c5\u5931\u8d25: {failed}",
+            "errors": errors,
+        }, ensure_ascii=False))
         sys.exit(1)
