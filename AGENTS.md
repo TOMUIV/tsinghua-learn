@@ -6,7 +6,7 @@
 
 | 脚本 | 职责 |
 |------|------|
-| `_config.py` | 路径/配置/凭证、DPAPI 解密 |
+| `_config.py` | 路径/配置/凭证、跨平台凭据解密 |
 | `login_manager.py` | 中央认证网关（默认 fast check，`--force-login` 完整登录） |
 | `learn_api.py` | HTTP API（课程/公告/课件/作业/讨论/问卷/聚合查询） |
 | `ops.py` | 文件操作（下载/批量下载/上传/移入/清理） |
@@ -42,7 +42,7 @@ python scripts/ops.py --action cleanup
 ## 关键约束
 
 - paths/creds 全走 `_config.py` getter
-- `credentials.json` DPAPI 加密
+- `credentials.json` 凭据加密存储（Windows: DPAPI；Linux: 本地主密钥 + Fernet）
 - 学期从 API 自动检测
 - 课程从 API 动态获取
 - 不创建新脚本
